@@ -725,26 +725,14 @@ private final class NativeChromeController: UITabBarController, UITabBarControll
         view.backgroundColor = .clear
         view.isOpaque = false
         delegate = self
-        if #available(iOS 27.1, *) {
-            registerForTraitChanges(UITraitCollection.systemTraitsAffectingVerticalBarEdge) {
-                (controller: NativeChromeController, _: UITraitCollection) in
-                controller.updateTransitionDirection()
-            }
-        }
+        // CI 补丁：UITraitCollection.systemTraitsAffectingVerticalBarEdge 属于 iOS 27.1 SDK，
+        // 当前 runner 的 Xcode 只有 iOS 26.x SDK，这里先跳过（用 Xcode 27 构建时可还原）。
     }
 
     /// `verticalBarEdge`（leading/trailing）= 折叠屏 iPhone 折叠态：tab bar 竖排到侧边、状态栏移到右侧、顶部无状态栏。形态只认这个 trait（高度算 0 分不出「顶部没有」与「被导航栏吃光」）。
     func updateTransitionDirection() {
-        let vertical: Bool
-        if #available(iOS 27.1, *) {
-            switch traitCollection.verticalBarEdge {
-            case .leading, .trailing: vertical = true
-            case .unspecified: vertical = false
-            @unknown default: vertical = false
-            }
-        } else {
-            vertical = false
-        }
+        // CI 补丁：traitCollection.verticalBarEdge 属于 iOS 27.1 SDK，先固定为 false。
+        let vertical: Bool = false
         onTransitionDirectionChange?(vertical)
         // 排除 iPad：它把 tab bar 挪到侧边时同样报 verticalBarEdge，但顶部一直有状态栏
         onVerticalBarEdgeChange?(vertical && traitCollection.userInterfaceIdiom == .phone)
